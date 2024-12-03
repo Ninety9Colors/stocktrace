@@ -1,0 +1,5 @@
+12-02 23:54:21 UTC-06:00 INFO requires_explicit_init.<locals>.wrapper Appending to file test_append_log.log with message: "2024-12-02 23:54:21.847826-06:00 INFO TEST!!!!"
+12-02 23:55:28 UTC-06:00 INFO wrapper Appending to file test_append_log.log with message: "2024-12-02 23:55:28.351261-06:00 INFO TEST!!!!"
+12-02 23:56:05 UTC-06:00 INFO FileManager.append_file Appending to file test_append_log.log with message: "2024-12-02 23:56:05.683354-06:00 INFO TEST!!!!"
+12-02 23:56:21 UTC-06:00 INFO FileManager.append_file Appending to file tests/test_append_log.log with message: "2024-12-02 23:56:21.379066-06:00 INFO TEST!!!!"
+12-02 23:58:22 UTC-06:00 INFO FileManager.append_file Appending to file tests/test_append_file.log with message: "2024-12-02 23:58:22.949804-06:00 INFO TEST!!!!"
