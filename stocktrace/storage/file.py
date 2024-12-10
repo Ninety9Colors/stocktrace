@@ -9,7 +9,8 @@ from stocktrace.utils import InitClass, requires_explicit_init, TIMEZONE
 class FileQuery:
     """ Contains information relating to a single file request: path, request time, end time
     """
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
+        Logger.info(f'FileQuery.__init__ initializing FileQuery: {file_path=}')
         self.__file_path = file_path
 
         self.__begin_time = dt.datetime.now(TIMEZONE)
@@ -28,7 +29,7 @@ class FileQuery:
         return self.__end_time
     
     @end_time.setter
-    def end_time(self, end_time: dt.datetime):
+    def end_time(self, end_time: dt.datetime) -> None:
         self.__end_time = end_time
     
     @property
@@ -37,15 +38,15 @@ class FileQuery:
 
 class FileManager(InitClass):
     @classmethod
-    def init(cls):
+    def init(cls) -> None:
         #TODO: Verify File Structure
+        Logger.info('FileManager.init initializing FileManager')
         cls._initialized = True
     
     @classmethod
     @requires_explicit_init
-    def append_file(cls, query: FileQuery, message: str, end: str='\n', to_log=False):
-        if not to_log:
-            Logger.debug(f'FileManager.append_file Appending to file {query.file_path} with message: \"{message}\"')
+    def append_file(cls, query: FileQuery, message: str, end: str='\n') -> None:
+        Logger.debug(f'FileManager.append_file Appending to file {query.file_path} with message: \"{message}\"')
         with open(query.file_path, 'a') as file:
             file.write(message)
             file.write(end)

@@ -1,9 +1,12 @@
+import os
+
 import datetime as dt
 
 from stocktrace.utils import InitClass, requires_init, TIMEZONE
 
-DEFAULT_LOG_PATH = 'stocktrace/data/logs/'
+DEFAULT_LOG_PATH = 'logs/'
 DEFAULT_LOG_FILE_NAME = 'debug'
+DEFAULT_MAX_LOG_COUNT = 10
 
 class LOG_LEVEL:
 	INFO = 0
@@ -17,7 +20,7 @@ class Log:
 		self.__file_path = file_path
 		self.__log_level = log_level
 
-	def write_log(self, text: str, message_level: int, end='\n') -> None:
+	def write_log(self, text: str, message_level: int=LOG_LEVEL.INFO, end='\n') -> None:
 		if message_level < self.log_level:
 			return
 
@@ -55,12 +58,38 @@ class Log:
 	def log_level(self) -> int:
 		return self.__log_level
 
+class CircularLog(Log):
+	def __init__(self, file_name: str, file_path: str, log_level: int=LOG_LEVEL.INFO, max_log_count: int=5) -> None:
+		super().__init__(file_name, file_path, log_level)
+		self.__max_log_count = max_log_count
+
+	def write_log(self, text: str, message_level: int=LOG_LEVEL.INFO, end='\n') -> None:
+		super().write_log(text, message_level, end)
+		self._verify_circular()
+
+	def _verify_circular(self) -> None:
+		# Create list of files in the log directory
+		it = os.scandir(self.file_path)
+		files = []
+		for file in it:
+			if self.file_name in file.name:
+				files.append(file)
+
+		# Sort by time, and remove old ones if there are too many
+		files.sort(key=lambda file: -file.stat().st_birthtime)
+		for i in range(len(files)-1, self.max_log_count-1, -1):
+			os.remove(files[i].path)
+
+	@property
+	def max_log_count(self) -> int:
+		return self.__max_log_count
+
 class Logger(InitClass):
 	@classmethod
 	def init(cls):
 		cls._initialized = True;
 		cls._logs = []
-		cls._logs.append(Log(DEFAULT_LOG_FILE_NAME, DEFAULT_LOG_PATH))
+		cls._logs.append(CircularLog(DEFAULT_LOG_FILE_NAME, DEFAULT_LOG_PATH, max_log_count=DEFAULT_MAX_LOG_COUNT))
 
 	@classmethod
 	@requires_init
