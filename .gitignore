@@ -1,3 +1,4 @@
+*.csv
 *.vscode
 *.log
 */**/__pycache__

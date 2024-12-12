@@ -87,9 +87,10 @@ class CircularLog(Log):
 class Logger(InitClass):
 	@classmethod
 	def init(cls):
-		cls._initialized = True;
+		cls._initialized = True
 		cls._logs = []
 		cls._logs.append(CircularLog(DEFAULT_LOG_FILE_NAME, DEFAULT_LOG_PATH, max_log_count=DEFAULT_MAX_LOG_COUNT))
+		cls.info('--- Logger Initialized ---')
 
 	@classmethod
 	@requires_init
