@@ -48,6 +48,8 @@ class History(ABC):
 	def _parse_csv(self) -> None:
 		self.__data = pd.read_csv(self.file_path, parse_dates=True)
 		self.data.index = pd.to_datetime(self.data.iloc[:,0])
+		self.data.index = self.data.index.tz_convert(TIMEZONE)
+		
 		self.data.drop(columns=self.data.columns[0], axis=1, inplace=True)
 		logger.info(f'Parsed CSV:\n{self.data}')
 	
@@ -73,15 +75,20 @@ class AssetHistory(History):
 		if (start >= current_date):
 			logger.info(f'Data is up to current date {current_date}, continuing...')
 			return
-		data_to_add = self._ticker.history(interval=self.interval, start=last_updated+interval_to_timedelta(self.interval), end=current_date)
-		data_to_add.index = data_to_add.index.tz_convert(TIMEZONE)
+		data_to_add = self._ticker.history(interval=self.interval, start=last_updated, end=current_date)
+		if (data_to_add.empty):
+			logger.info(f'Download failed, likely yfinance lag, ignoring.')
+		else:
+			logger.info(f'Raw data retrieved: {data_to_add}')
+			data_to_add.drop(data_to_add.index[0],inplace=True)
+			data_to_add.index = data_to_add.index.tz_convert(TIMEZONE)
 
-		logger.info(f'Data retrieved, concatenating to existing {self.file_path}')
-		logger.info(f'Data to concat:\n{data_to_add}')
-		self.data = pd.concat([self.data, data_to_add])
+			logger.info(f'Data retrieved, concatenating to existing {self.file_path}')
+			logger.info(f'Data to concat:\n{data_to_add}')
+			self.data = pd.concat([self.data, data_to_add])
 
-		logger.info(f'Writing to file {self.file_path}')
-		self.data.to_csv(self.file_path)
+			logger.info(f'Writing to file {self.file_path}')
+			self.data.to_csv(self.file_path)
 	
 	def _init_data(self) -> None:
 		logger.info(f'AssetHistory.init_data AssetHistory with ticker symbol {self.ticker_symbol} does not have data. Retrieving data from yfinance...')
