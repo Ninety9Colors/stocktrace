@@ -47,7 +47,7 @@ class History(ABC):
 
 	def _parse_csv(self) -> None:
 		self.__data = pd.read_csv(self.file_path, parse_dates=True)
-		self.data.index = pd.to_datetime(self.data['Date'])
+		self.data.index = pd.to_datetime(self.data.iloc[:,0])
 		self.data.drop(columns=self.data.columns[0], axis=1, inplace=True)
 		logger.info(f'Parsed CSV:\n{self.data}')
 	
@@ -65,6 +65,7 @@ class AssetHistory(History):
 	def update_data(self) -> None:
 		logger.info(f'AssetHistory.update_data Retrieving recent data of {self.ticker_symbol}')
 		last_updated = pd.to_datetime(self.data.index.max())
+		last_updated = last_updated.replace(tzinfo=TIMEZONE)
 		current_date = dt.datetime.now(TIMEZONE)
 
 		logger.info(f'Date of most recent data row: {last_updated}')

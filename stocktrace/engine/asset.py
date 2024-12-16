@@ -1,4 +1,3 @@
-import datetime as dt
 import pandas as pd
 
 from stocktrace.logging.logger import Logger as logger
@@ -25,3 +24,7 @@ class Asset:
 	@property
 	def ticker_symbol(self) -> str:
 		return self.__ticker_symbol
+
+	@property
+	def data(self) -> pd.DataFrame:
+		return self.history.data
