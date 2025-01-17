@@ -14,7 +14,38 @@ class LOG_LEVEL:
 	WARNING = 2
 	CRITICAL = 3
 
-class Log:
+class TerminalLog:
+	def __init__(self, log_level: int=LOG_LEVEL.INFO):
+		self.__log_level = log_level
+
+	def write_log(self, text: str, message_level: int=LOG_LEVEL.INFO, end='\n') -> None:
+		if message_level < self.log_level:
+			return
+
+		now = dt.datetime.now(TIMEZONE)
+		time_string = now.strftime('%m-%d %H:%M:%S %Z')
+		level_string = self.level_string(message_level)
+		message = time_string + ' ' + level_string + ' ' + text
+		print(message, end=end)
+
+	def level_string(self, message_level: int) -> str:
+		match message_level:
+			case LOG_LEVEL.INFO:
+				return 'INFO'
+			case LOG_LEVEL.DEBUG:
+				return 'DEBUG'
+			case LOG_LEVEL.WARNING:
+				return 'WARNING'
+			case LOG_LEVEL.CRITICAL:
+				return 'CRITICAL'
+			case _:
+				raise NameError(f'Log level {self.log_level} not found')
+
+	@property
+	def log_level(self) -> int:
+		return self.__log_level
+
+class FileLog:
 	def __init__(self, file_name: str, file_path: str, log_level: int=LOG_LEVEL.INFO):
 		self.__file_name = file_name
 		self.__file_path = file_path
@@ -43,7 +74,7 @@ class Log:
 			case LOG_LEVEL.CRITICAL:
 				return 'CRITICAL'
 			case _:
-				raise NameError(f'Log level {log_level} not found')
+				raise NameError(f'Log level {self.log_level} not found')
 				return ''
 
 	@property
@@ -58,7 +89,7 @@ class Log:
 	def log_level(self) -> int:
 		return self.__log_level
 
-class CircularLog(Log):
+class CircularLog(FileLog):
 	def __init__(self, file_name: str, file_path: str, log_level: int=LOG_LEVEL.INFO, max_log_count: int=5) -> None:
 		super().__init__(file_name, file_path, log_level)
 		self.__max_log_count = max_log_count
@@ -90,6 +121,7 @@ class Logger(InitClass):
 		cls._initialized = True
 		cls._logs = []
 		cls._logs.append(CircularLog(DEFAULT_LOG_FILE_NAME, DEFAULT_LOG_PATH, max_log_count=DEFAULT_MAX_LOG_COUNT))
+		cls._logs.append(TerminalLog())
 		cls.info('--- Logger Initialized ---')
 
 	@classmethod
@@ -114,7 +146,7 @@ class Logger(InitClass):
 
 	@classmethod
 	@requires_init
-	def append_log(cls, log: Log):
+	def append_log(cls, log: FileLog):
 		cls._logs.append(log)
 
 	@classmethod

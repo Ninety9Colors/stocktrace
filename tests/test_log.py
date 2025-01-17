@@ -1,6 +1,6 @@
 import stocktrace as st
 
-warning_log = st.Log('jaemothy', 'tests/', st.LOG_LEVEL.WARNING)
+warning_log = st.FileLog('jaemothy', 'tests/', st.LOG_LEVEL.WARNING)
 st.Logger.append_log(warning_log)
 
 st.Logger.debug('jaemothy smells like poopy')
