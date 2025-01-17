@@ -5,7 +5,8 @@ import pandas as pd
 import stocktrace.logging.logger as logger
 
 # TODO: Get timezone from settings
-TIMEZONE = dt.timezone(dt.timedelta(hours=-6))
+TIMEDELTA = dt.timedelta(hours=-6)
+TIMEZONE = dt.timezone(TIMEDELTA)
 
 class InitClass:
     _initialized: bool = False
@@ -26,7 +27,9 @@ def requires_init(func):
     return wrapper
 
 def interval_to_timedelta(interval):
-    if interval == "1mo":
+    if interval == "1d":
+        return relativedelta(days=1)
+    elif interval == "1mo":
         return relativedelta(months=1)
     elif interval == "3mo":
         return relativedelta(months=3)
@@ -44,3 +47,13 @@ def interval_to_timedelta(interval):
         return pd.Timedelta(days=7)
     else:
         return pd.Timedelta(interval)
+
+def delta_to_seconds(delta) -> int:
+    if isinstance(delta, pd.Timedelta):
+        return delta.total_seconds()
+    elif isinstance(delta, relativedelta):
+        days = delta.years * 365 + delta.months * 30 + delta.days
+        seconds = days * 86400 + delta.hours * 3600 + delta.minutes * 60 + delta.seconds
+        return seconds
+    else:
+        raise ValueError(f'Delta must be pd.Timedelta or relativedelta, got {type(delta)}')

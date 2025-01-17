@@ -9,9 +9,10 @@ from stocktrace.logging.logger import Logger as logger
 from stocktrace.utils import TIMEZONE, interval_to_timedelta
 
 class History(ABC):
-	def __init__(self, file_path: str, interval: str='1d') -> None:
+	def __init__(self, file_path: str, interval: str='1d', listeners=[]) -> None:
 		self.__file_path = file_path
 		self.__interval = interval
+		self.__listeners = listeners
 		logger.info(f'Checking if data file {self.file_path} exists')
 		if os.path.isfile(file_path):
 			logger.info('File exists, parsing CSV')
@@ -28,6 +29,16 @@ class History(ABC):
 	@abstractmethod
 	def _init_data() -> None:
 		pass
+
+	def add_listener(self, func) -> None:
+		logger.info(f'Adding listener {func} to {self}')
+		self.listeners.append(func)
+	
+	def call_listeners(self) -> None:
+		logger.info(f'Calling listeners in: {self}')
+		for f in self.listeners:
+			logger.info(f'Listener: {f}')
+			f()
 	
 	@property
 	def file_path(self) -> str:
@@ -40,6 +51,10 @@ class History(ABC):
 	@property
 	def data(self) -> pd.DataFrame:
 		return self.__data
+
+	@property
+	def listeners(self) -> list:
+		return self.__listeners
 
 	@data.setter
 	def data(self, new_data: pd.DataFrame) -> None:
@@ -54,7 +69,7 @@ class History(ABC):
 		logger.info(f'Parsed CSV:\n{self.data}')
 	
 	def __repr__(self) -> str:
-		return self.data.__repr__()
+		return f'History({self.file_path}, {self.interval})'
 	
 class AssetHistory(History):
 	def __init__(self, ticker_symbol: str, file_path: str, interval: str='1d') -> None:
@@ -79,8 +94,9 @@ class AssetHistory(History):
 		if (data_to_add.empty):
 			logger.info(f'Download failed, likely yfinance lag, ignoring.')
 		else:
-			logger.info(f'Raw data retrieved: {data_to_add}')
+			logger.info(f'Raw data retrieved:\n {data_to_add}')
 			data_to_add.drop(data_to_add.index[0],inplace=True)
+			logger.info(f'Raw data after dropping first index:\n {data_to_add}')
 			data_to_add.index = data_to_add.index.tz_convert(TIMEZONE)
 
 			logger.info(f'Data retrieved, concatenating to existing {self.file_path}')
@@ -89,6 +105,7 @@ class AssetHistory(History):
 
 			logger.info(f'Writing to file {self.file_path}')
 			self.data.to_csv(self.file_path)
+		self.call_listeners()
 	
 	def _init_data(self) -> None:
 		logger.info(f'AssetHistory.init_data AssetHistory with ticker symbol {self.ticker_symbol} does not have data. Retrieving data from yfinance...')
@@ -97,6 +114,7 @@ class AssetHistory(History):
 
 		logger.info(f'Data retrieved, writing to csv...')
 		self.data.to_csv(self.file_path)
+		self.call_listeners()
 
 	@property
 	def ticker_symbol(self) -> str:
