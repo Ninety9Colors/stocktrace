@@ -17,7 +17,7 @@ def drop():
 def update():
     asset.update_data()
 
-asset = Asset('MSFT')
+asset = Asset('SHOP')
 pg.mkQApp()
 
 widget = AssetWidget(asset)
@@ -29,7 +29,7 @@ button1.clicked.connect(drop)
 button2 = pg.QtWidgets.QPushButton('Update data to current')
 button2.clicked.connect(update)
 
-widget.layout.addWidget(button1)
-widget.layout.addWidget(button2)
+widget.layout.addWidget(button1, 2,0)
+widget.layout.addWidget(button2, 3,0)
 
 pg.exec()

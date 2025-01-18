@@ -42,16 +42,17 @@ class AssetWidget(QtWidgets.QWidget):
         super().__init__(*args, **kargs)
         self.__auto_update = auto_update
         self.__asset = asset
-        self.__plot_widget = pg.PlotWidget()
-        self.__plot_item = self.plot_widget.plotItem
-
-        self.__layout = QtWidgets.QGridLayout()
         self.__timeframe = '1mo'
-        self.setLayout(self.layout)
-        self.layout.addWidget(self.plot_widget)
-        self.layout.addWidget(_TimeframeWidget(self))
 
         self.asset.add_listener(self._update_callback)
+
+        self.__plot_widget = pg.PlotWidget()
+        self.__plot_item = self.plot_widget.plotItem
+        self.__layout = QtWidgets.QGridLayout()
+        self.setLayout(self.layout)
+        self.layout.addWidget(self.plot_widget, 0, 0)
+        self.layout.addWidget(_TimeframeWidget(self), 1, 0)
+
         self._init_graph()
     
     def update_data(self) -> None:
@@ -62,17 +63,19 @@ class AssetWidget(QtWidgets.QWidget):
         logger.info(f'Retrieved y data:\n{y}')
         self.line_item.setData(x, y)
         # self.candlestick_item.setData(x, y)
+        self.plot_item.setLimits(xMin=x[0], xMax=x[-1], yMin=np.min(y), yMax=np.max(y))
         self.update_timeframe()
     
     def update_timeframe(self, timeframe: str = None) -> None:
-        logger.info(f'Updating timeframe of {self.__repr__()} to {timeframe}')
         if not timeframe:
             timeframe = self.timeframe
+        logger.info(f'Updating timeframe of {self.__repr__()} to {timeframe}')
         data = self.line_item.getData()
         if (timeframe == 'Max'):
             self.plot_item.setXRange(data[0][0], data[0][-1])
         else:
             delta_seconds = delta_to_seconds(interval_to_timedelta(timeframe))
+            logger.info(f'Updating x range to {data[0][-1] - delta_seconds} to {data[0][-1]}')
             self.plot_item.setXRange(data[0][-1] - delta_seconds, data[0][-1])
         self.plot_item.enableAutoRange(axis='y')
         self.plot_item.setAutoVisible(y=True)
