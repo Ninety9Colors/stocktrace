@@ -1,12 +1,17 @@
 import datetime as dt
 from dateutil.relativedelta import relativedelta
 import pandas as pd
+from pyqtgraph.Qt.QtGui import QColor
 
 import stocktrace.logging.logger as logger
 
 # TODO: Get timezone from settings
 TIMEDELTA = dt.timedelta(hours=-6)
 TIMEZONE = dt.timezone(TIMEDELTA)
+
+# TODO: Get color from settings
+BULLISH = QColor(0, 255, 0)
+BEARISH = QColor(255, 0, 0)
 
 class InitClass:
     _initialized: bool = False

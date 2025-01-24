@@ -17,7 +17,7 @@ def drop():
 def update():
     asset.update_data()
 
-asset = Asset('SHOP')
+asset = Asset('MSFT')
 pg.mkQApp()
 
 widget = AssetWidget(asset)
