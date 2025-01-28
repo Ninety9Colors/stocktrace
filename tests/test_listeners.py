@@ -23,5 +23,6 @@ data.index = data.index.tz_convert(TIMEZONE)
 data.drop(columns=data.columns[0], axis=1, inplace=True)
 data.drop(data.tail(3).index,inplace=True)
 data.to_csv(apple.file_path)
+apple.data.drop(apple.data.tail(3).index,inplace=True)
 
 apple.update_data()

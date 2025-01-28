@@ -3,14 +3,14 @@ import datetime as dt
 from os.path import isfile
 from typing import Optional
 
-from stocktrace.logging.logger import Logger
+from stocktrace.logger import Logger as logger
 from stocktrace.utils import InitClass, requires_explicit_init, TIMEZONE
 
 class FileQuery:
     """ Contains information relating to a single file request: path, request time, end time
     """
     def __init__(self, file_path: str) -> None:
-        Logger.info(f'FileQuery.__init__ initializing FileQuery: {file_path=}')
+        logger.info(f'FileQuery.__init__ initializing FileQuery: {file_path=}')
         self.__file_path = file_path
 
         self.__begin_time = dt.datetime.now(TIMEZONE)
@@ -40,13 +40,13 @@ class FileManager(InitClass):
     @classmethod
     def init(cls) -> None:
         #TODO: Verify File Structure
-        Logger.info('FileManager.init initializing FileManager')
+        logger.info('FileManager.init initializing FileManager')
         cls._initialized = True
     
     @classmethod
     @requires_explicit_init
     def append_file(cls, query: FileQuery, message: str, end: str='\n') -> None:
-        Logger.debug(f'FileManager.append_file Appending to file {query.file_path} with message: \"{message}\"')
+        logger.debug(f'FileManager.append_file Appending to file {query.file_path} with message: \"{message}\"')
         with open(query.file_path, 'a') as file:
             file.write(message)
             file.write(end)

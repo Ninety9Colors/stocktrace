@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 import pandas as pd
 from pyqtgraph.Qt.QtGui import QColor
 
-import stocktrace.logging.logger as logger
+import stocktrace.logger as logger
 
 # TODO: Get timezone from settings
 TIMEDELTA = dt.timedelta(hours=-6)

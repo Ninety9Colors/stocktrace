@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import yfinance as yf
 
-from stocktrace.logging.logger import Logger as logger
+from stocktrace.logger import Logger as logger
 
 from stocktrace.utils import TIMEZONE, interval_to_timedelta
 

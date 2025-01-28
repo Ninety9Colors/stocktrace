@@ -5,8 +5,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets, QtGui, QtCore
 
 from stocktrace.utils import interval_to_timedelta, delta_to_seconds, BULLISH, BEARISH
-from stocktrace.logging.logger import Logger as logger
-from stocktrace.engine.asset import Asset
+from stocktrace.logger import Logger as logger
+from stocktrace.asset import Asset
 
 class CandlestickItem(pg.GraphicsObject):
     def __init__(self, asset: Asset, hover: bool=True, *args, **kargs) -> None:

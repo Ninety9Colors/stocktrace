@@ -1,7 +1,7 @@
 import pandas as pd
 
-from stocktrace.logging.logger import Logger as logger
-from stocktrace.engine.history import AssetHistory
+from stocktrace.logger import Logger as logger
+from stocktrace.history import AssetHistory
 
 ASSET_HISTORY_PATH = 'data/'
 
