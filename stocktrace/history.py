@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import yfinance as yf
 
+from stocktrace.file import CSV
 from stocktrace.logger import Logger as logger
 
 from stocktrace.utils import TIMEZONE, interval_to_timedelta
@@ -13,21 +14,14 @@ class History(ABC):
 		self.__file_path = file_path
 		self.__interval = interval
 		self.__listeners = listeners
-		logger.info(f'Checking if data file {self.file_path} exists')
-		if os.path.isfile(file_path):
-			logger.info('File exists, parsing CSV')
-			self._parse_csv()
-			self.update_data()
-		else:
-			logger.info('File does not exist, calling init_data function')
-			self._init_data()
+		self.__csv = CSV(file_path)
+		self.update_data()
+	
+	def save_data(self) -> None:
+		self.__csv.save()
 
 	@abstractmethod
 	def update_data() -> None:
-		pass
-
-	@abstractmethod
-	def _init_data() -> None:
 		pass
 
 	def add_listener(self, func) -> None:
@@ -47,73 +41,61 @@ class History(ABC):
 	@property
 	def interval(self) -> str:
 		return self.__interval
+	
+	@property
+	def csv(self) -> CSV:
+		return self.__csv
 
 	@property
 	def data(self) -> pd.DataFrame:
-		return self.__data
+		return self.__csv.data
 
 	@property
 	def listeners(self) -> list:
 		return self.__listeners
-
-	@data.setter
-	def data(self, new_data: pd.DataFrame) -> None:
-		self.__data = new_data
-
-	def _parse_csv(self) -> None:
-		self.__data = pd.read_csv(self.file_path, parse_dates=True)
-		self.data.index = pd.to_datetime(self.data.iloc[:,0])
-		self.data.index = self.data.index.tz_convert(TIMEZONE)
-		
-		self.data.drop(columns=self.data.columns[0], axis=1, inplace=True)
-		logger.info(f'Parsed CSV:\n{self.data}')
 	
 	def __repr__(self) -> str:
 		return f'History({self.file_path}, {self.interval})'
 	
 class AssetHistory(History):
-	def __init__(self, ticker_symbol: str, file_path: str, interval: str='1d') -> None:
+	def __init__(self, ticker_symbol: str, file_path: str, interval: str='1d', auto_save = False) -> None:
 		logger.debug(f'AssetHistory.__init__ Creating AssetHistory with ticker symbol {ticker_symbol}, file path {file_path}, interval {interval}')
 
 		self.__ticker_symbol = ticker_symbol
 		self.__ticker = yf.Ticker(self.ticker_symbol)
+		self.__auto_save = auto_save
 		super().__init__(file_path, interval)
 	
 	def update_data(self) -> None:
 		logger.info(f'AssetHistory.update_data Retrieving recent data of {self.ticker_symbol}')
-		last_updated = pd.to_datetime(self.data.index.max())
-		last_updated = last_updated.replace(tzinfo=TIMEZONE)
+		last_updated = self.csv.latest_date()
 		current_date = dt.datetime.now(TIMEZONE)
 
-		logger.info(f'Date of most recent data row: {last_updated}')
+		logger.info(f'Date of most recent data row (min date if empty): {last_updated}')
 		start = last_updated+interval_to_timedelta(self.interval)
 		if (start >= current_date):
 			logger.info(f'Data is up to current date {current_date}, continuing...')
 			return
-		data_to_add = self._ticker.history(interval=self.interval, start=last_updated, end=current_date)
+		if (last_updated == dt.datetime.min.replace(tzinfo=TIMEZONE)):
+			logger.info(f'No cached data found, initializing data...')
+			data_to_add = self._ticker.history(interval=self.interval, period='max')
+		else:
+			logger.info(f'Downloading new data...')
+			data_to_add = self._ticker.history(interval=self.interval, start=start, end=current_date)
+
 		if (data_to_add.empty):
 			logger.info(f'Download failed, likely yfinance lag, ignoring.')
 		else:
 			logger.info(f'Raw data retrieved:\n {data_to_add}')
-			data_to_add.drop(data_to_add.index[0],inplace=True)
-			logger.info(f'Raw data after dropping first index:\n {data_to_add}')
+			#data_to_add.drop(data_to_add.index[0],inplace=True)
+			#logger.info(f'Raw data after dropping first index:\n {data_to_add}')
 			data_to_add.index = data_to_add.index.tz_convert(TIMEZONE)
 
-			logger.info(f'Data retrieved, concatenating to existing {self.file_path}')
+			logger.info(f'Data retrieved, concatenating to existing CSV: {self.data}')
 			logger.info(f'Data to concat:\n{data_to_add}')
-			self.data = pd.concat([self.data, data_to_add])
-
-			logger.info(f'Writing to file {self.file_path}')
-			self.data.to_csv(self.file_path)
-		self.call_listeners()
-	
-	def _init_data(self) -> None:
-		logger.info(f'AssetHistory.init_data AssetHistory with ticker symbol {self.ticker_symbol} does not have data. Retrieving data from yfinance...')
-		self.data = self._ticker.history(interval=self.interval, period='max')
-		self.data.index = self.data.index.tz_convert(TIMEZONE)
-
-		logger.info(f'Data retrieved, writing to csv...')
-		self.data.to_csv(self.file_path)
+			self.csv.append(data_to_add)
+			if self.__auto_save:
+				self.save_data()
 		self.call_listeners()
 
 	@property

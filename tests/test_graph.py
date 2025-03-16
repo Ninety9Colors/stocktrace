@@ -5,19 +5,15 @@ import time
 from stocktrace import Asset, AssetWidget, TIMEZONE
 
 def drop():
-    data = pd.read_csv(asset.file_path, parse_dates=True)
-    data.index = pd.to_datetime(data.iloc[:,0])
-    data.index = data.index.tz_convert(TIMEZONE)
-    data.drop(columns=data.columns[0], axis=1, inplace=True)
+    data = asset.data
     data.drop(data.tail(3).index,inplace=True)
-    data.to_csv(asset.file_path)
     asset.data.drop(asset.data.tail(3).index,inplace=True)
     widget.update_data()
 
 def update():
     asset.update_data()
 
-asset = Asset('MSFT')
+asset = Asset('BTC-USD',auto_save=False)
 pg.mkQApp()
 
 widget = AssetWidget(asset)
