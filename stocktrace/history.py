@@ -3,6 +3,7 @@ import datetime as dt
 import os
 import pandas as pd
 import yfinance as yf
+from typing import Optional
 
 from stocktrace.file import CSV
 from stocktrace.logger import Logger as logger
@@ -68,7 +69,7 @@ class AssetHistory(History):
 	
 	def update_data(self) -> None:
 		logger.info(f'AssetHistory.update_data Retrieving recent data of {self.ticker_symbol}')
-		last_updated = self.csv.latest_date()
+		last_updated = self.latest_date()
 		current_date = dt.datetime.now(TIMEZONE)
 
 		logger.info(f'Date of most recent data row (min date if empty): {last_updated}')
@@ -97,6 +98,18 @@ class AssetHistory(History):
 			if self.__auto_save:
 				self.save_data()
 		self.call_listeners()
+	
+	def latest_cents(self, col: str = 'Close') -> Optional[int]:
+		return self.csv.latest_cents(col)
+	
+	def get_cents(self, time: dt.datetime, col: str = 'Close') -> Optional[int]:
+		return self.csv.get_cents(time, col)
+	
+	def latest_date(self) -> dt.datetime:
+		return self.csv.latest_date()
+	
+	def prev_date(self, time: dt.datetime) -> dt.datetime:
+		return self.csv.prev_date(time)
 
 	@property
 	def ticker_symbol(self) -> str:

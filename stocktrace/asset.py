@@ -1,8 +1,11 @@
+import datetime as dt
+from typing import Optional
 import pandas as pd
 
 from stocktrace.file import CSV
 from stocktrace.logger import Logger as logger
 from stocktrace.history import AssetHistory
+from stocktrace.utils import InitClass, requires_init
 
 ASSET_HISTORY_PATH = 'data/'
 
@@ -23,6 +26,18 @@ class Asset:
 	
 	def save_data(self) -> None:
 		self.history.save_data()
+	
+	def latest_cents(self, col: str = 'Close') -> Optional[int]:
+		return self.__history.latest_cents(col)
+
+	def get_cents(self, time: dt.datetime, col: str = 'Close') -> Optional[int]:
+		return self.__history.get_cents(time, col)
+	
+	def latest_date(self) -> dt.datetime:
+		return self.__history.latest_date()
+	
+	def prev_date(self, time: dt.datetime) -> dt.datetime:
+		return self.__history.prev_date(time)
 
 	@property
 	def history(self) -> AssetHistory:
@@ -51,19 +66,21 @@ class Asset:
 	def __repr__(self) -> str:
 		return f'Asset({self.ticker_symbol}, {self.interval})'
 
-class AssetManager:
-	def __init__(self) -> None:
-		logger.debug('AssetManager.__init__ Initializing AssetManager')
-		self.__assets = {}
+class AssetManager(InitClass):
+	@classmethod
+	def init(cls) -> None:
+		cls._initialized = True
+		cls.__assets = {}
+		logger.info(f'--- Asset Manager Initialized ---')
 	
-	def get(self, ticker_symbol: str, interval: str='1d') -> Asset:
-		if ticker_symbol not in self.assets:
-			self.assets[ticker_symbol] = Asset(ticker_symbol, interval)
-		return self.assets[ticker_symbol]
-	
-	def __repr__(self) -> str:
-		return f'AssetManager({self.assets})'
+	@classmethod
+	@requires_init
+	def get(cls, ticker_symbol: str, interval: str='1d') -> Asset:
+		if ticker_symbol not in cls.__assets:
+			cls.__assets[ticker_symbol] = Asset(ticker_symbol, interval)
+		return cls.__assets[ticker_symbol]
 
-	@property
-	def assets(self) -> dict:
-		return self.__assets
+	@classmethod
+	@requires_init
+	def get_assets(cls) -> dict:
+		return cls.__assets

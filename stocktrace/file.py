@@ -1,4 +1,5 @@
 import datetime as dt
+from math import ceil
 import pandas as pd
 
 from os.path import isfile
@@ -34,11 +35,35 @@ class CSV:
             if self.__append_indice == -1:
                 self.__append_indice = len(self.__data.index)
             self.__data = pd.concat([self.__data, data])
+
+    def get_cents(self, time: dt.datetime, col: str = 'Close') -> Optional[int]:
+        try:
+            return ceil(self.data.loc[time][col]*100)
+        except KeyError:
+            logger.warning(f'CSV.get_cents() could not find {time} in {self.file_path}')
+            return None
+    
+    def prev_date(self, time: dt.datetime) -> dt.datetime:
+        if self.data.empty:
+            logger.warning(f'CSV.prev_date() no data in {self.file_path}')
+            return dt.datetime.min.replace(tzinfo=TIMEZONE)
+        try:
+            return self.__data.index[self.__data.index < time][-1]
+        except IndexError:
+            logger.warning(f'CSV.prev_date() could not find previous date to {time} in {self.file_path}')
+            return dt.datetime.min.replace(tzinfo=TIMEZONE)
         
     def latest_date(self) -> dt.datetime:
         if self.data.empty:
+            logger.warning(f'CSV.latest_date() no data in {self.file_path}')
             return dt.datetime.min.replace(tzinfo=TIMEZONE)
         return pd.to_datetime(self.data.index.max()).replace(tzinfo=TIMEZONE)
+    
+    def latest_cents(self, col: str = 'Close') -> Optional[int]:
+        if self.data.empty:
+            logger.warning(f'CSV.latest_cents() no data in {self.file_path}')
+            return None
+        return ceil(self.data[col][-1]*100)
     
     @property
     def data(self) -> pd.DataFrame:
