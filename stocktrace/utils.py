@@ -13,14 +13,11 @@ TIMEZONE = dt.timezone(TIMEDELTA)
 BULLISH = QColor(0, 255, 0)
 BEARISH = QColor(255, 0, 0)
 
-class InitClass:
-    _initialized: bool = False
-
 def requires_explicit_init(func):
     def wrapper(cls, *args, **kwargs):
         if not cls._initialized:
-            logger.Logger.critical(f'{cls.__name__} not explicitly initialized, raising RuntimeError')
-            raise RuntimeError(f'{cls.__name__} is not initialized')
+            logger.Logger.critical(f'{cls} not explicitly initialized, raising RuntimeError')
+            raise RuntimeError(f'{cls} is not initialized')
         return func(cls, *args, **kwargs)
     return wrapper
 

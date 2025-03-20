@@ -2,7 +2,7 @@ import os
 
 import datetime as dt
 
-from stocktrace.utils import InitClass, requires_init, TIMEZONE
+from stocktrace.utils import requires_init, requires_explicit_init, TIMEZONE
 
 DEFAULT_LOG_PATH = 'logs/'
 DEFAULT_LOG_FILE_NAME = 'debug'
@@ -115,7 +115,8 @@ class CircularLog(FileLog):
 	def max_log_count(self) -> int:
 		return self.__max_log_count
 
-class Logger(InitClass):
+class Logger():
+	_initialized = False
 	@classmethod
 	def init(cls):
 		cls._initialized = True

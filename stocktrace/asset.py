@@ -5,7 +5,7 @@ import pandas as pd
 from stocktrace.file import CSV
 from stocktrace.logger import Logger as logger
 from stocktrace.history import AssetHistory
-from stocktrace.utils import InitClass, requires_init
+from stocktrace.utils import requires_init
 
 ASSET_HISTORY_PATH = 'data/'
 
@@ -69,7 +69,8 @@ class Asset:
 	def __repr__(self) -> str:
 		return f'Asset({self.ticker_symbol}, {self.interval})'
 
-class AssetManager(InitClass):
+class AssetManager():
+	_initialized = False
 	@classmethod
 	def init(cls) -> None:
 		cls._initialized = True

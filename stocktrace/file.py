@@ -6,7 +6,7 @@ from os.path import isfile
 from typing import Optional
 
 from stocktrace.logger import Logger as logger
-from stocktrace.utils import InitClass, requires_explicit_init, TIMEZONE
+from stocktrace.utils import TIMEZONE
 
 class CSV:
     def __init__(self, file_path: str, lazy_load = True) -> None:
