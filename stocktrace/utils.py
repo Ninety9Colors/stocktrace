@@ -6,7 +6,7 @@ from pyqtgraph.Qt.QtGui import QColor
 import stocktrace.logger as logger
 
 # TODO: Get timezone from settings
-TIMEDELTA = dt.timedelta(hours=-6)
+TIMEDELTA = dt.timedelta(hours=-5)
 TIMEZONE = dt.timezone(TIMEDELTA)
 
 # TODO: Get color from settings

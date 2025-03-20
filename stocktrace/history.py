@@ -90,6 +90,8 @@ class AssetHistory(History):
 			logger.info(f'Raw data retrieved:\n {data_to_add}')
 			#data_to_add.drop(data_to_add.index[0],inplace=True)
 			#logger.info(f'Raw data after dropping first index:\n {data_to_add}')
+			data_to_add.index = data_to_add.index.tz_convert('America/New_York')
+			data_to_add.index = data_to_add.index.normalize() + pd.Timedelta(hours=16)
 			data_to_add.index = data_to_add.index.tz_convert(TIMEZONE)
 
 			logger.info(f'Data retrieved, concatenating to existing CSV: {self.data}')
@@ -110,6 +112,9 @@ class AssetHistory(History):
 	
 	def prev_date(self, time: dt.datetime) -> dt.datetime:
 		return self.csv.prev_date(time)
+	
+	def prev_or_equal_date(self, time: dt.datetime) -> dt.datetime:
+		return self.csv.prev_or_equal_date(time)
 
 	@property
 	def ticker_symbol(self) -> str:

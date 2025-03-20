@@ -37,10 +37,14 @@ class CSV:
             self.__data = pd.concat([self.__data, data])
 
     def get_cents(self, time: dt.datetime, col: str = 'Close') -> Optional[int]:
+        # logger.info(f'CSV.get_cents() getting {col} at {time} from {self.file_path} ...')
+        time = self.prev_or_equal_date(time)
         try:
-            return ceil(self.data.loc[time][col]*100)
+            result = ceil(self.data.loc[time][col]*100)
+            # logger.info(f'... {result}')
+            return result
         except KeyError:
-            logger.warning(f'CSV.get_cents() could not find {time} in {self.file_path}')
+            logger.warning(f'CSV.get_cents() could not find date {time} in {self.file_path}')
             return None
     
     def prev_date(self, time: dt.datetime) -> dt.datetime:
@@ -51,6 +55,16 @@ class CSV:
             return self.__data.index[self.__data.index < time][-1]
         except IndexError:
             logger.warning(f'CSV.prev_date() could not find previous date to {time} in {self.file_path}')
+            return dt.datetime.min.replace(tzinfo=TIMEZONE)
+    
+    def prev_or_equal_date(self, time: dt.datetime) -> dt.datetime:
+        if self.data.empty:
+            logger.warning(f'CSV.prev_or_equal_date() no data in {self.file_path}')
+            return dt.datetime.min.replace(tzinfo=TIMEZONE)
+        try:
+            return self.__data.index[self.__data.index <= time][-1]
+        except IndexError:
+            logger.warning(f'CSV.prev_or_equal_date() could not find previous or equal date to {time} in {self.file_path}')
             return dt.datetime.min.replace(tzinfo=TIMEZONE)
         
     def latest_date(self) -> dt.datetime:

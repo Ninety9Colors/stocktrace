@@ -39,6 +39,9 @@ class Asset:
 	def prev_date(self, time: dt.datetime) -> dt.datetime:
 		return self.__history.prev_date(time)
 
+	def prev_or_equal_date(self, time: dt.datetime) -> dt.datetime:
+		return self.__history.prev_or_equal_date(time)
+
 	@property
 	def history(self) -> AssetHistory:
 		return self.__history
