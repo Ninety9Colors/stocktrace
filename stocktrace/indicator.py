@@ -31,11 +31,17 @@ class Indicator(ABC):
                 self.__data[time] = self.compute(asset, time)
             except:
                 logger.info(f'Indicator.init() Could not compute {self.__name} at {time}, likely due to warmup lag')
+        
+        self.__data.dropna(inplace=True)
     
     @property
     @requires_explicit_init
     def data(self) -> pd.Series:
         return self.__data
+
+    @property
+    def name(self) -> str:
+        return self.__name
 
 class SMA_TWENTY(Indicator):
     def compute(self, asset: Asset, time: dt.datetime) -> float:
