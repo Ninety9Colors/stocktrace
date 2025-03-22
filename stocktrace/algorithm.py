@@ -39,11 +39,16 @@ class Algorithm(ABC):
     def name(self) -> str:
         return self.__name
     
+    @name.setter
+    def name(self, new_name) -> None:
+        self.__name = new_name
+    
     def __repr__(self) -> str:
         return f'Algorithm({self.name})'
 
 class SMACrossOver(Algorithm):
     def init(self) -> None:
+        self.name = 'SMACrossOver'
         self.sma1 = self.indicator(SMA_TEN(), 'GOOG')
         self.sma2 = self.indicator(SMA_TWENTY(), 'GOOG')
         self.__latest_start = self.sma2.data.index[1]

@@ -26,24 +26,36 @@ class Backtest:
         logger.info(f'Backtest.run() Running backtest {self}')
         self.__algorithm.init()
         snp = AssetManager.get('^GSPC')
-        begin = snp.prev_or_equal_date(max(self.__start_date, self.__algorithm.get_latest_start()))
-        time = begin
-        end_time = self.__end_date if self.__end_date else dt.datetime.now(tz=TIMEZONE)
+        self.__start_date = snp.prev_or_equal_date(max(self.__start_date, self.__algorithm.get_latest_start()))
+        time = self.__start_date
+        self.__end_date = snp.prev_or_equal_date(self.__end_date if self.__end_date else dt.datetime.now(tz=TIMEZONE))
         last_percent = 0
-        while (time < end_time):
+        while (time <= self.__end_date):
             self.__broker.process_orders(time)
             self.__algorithm.next(time, self.__broker)
             self.__equity.loc[time] = self.__broker.equity(time)
             i = snp.data.index.get_loc(time)
             if trace:
-                percent = (pd.Timestamp(time)-pd.Timestamp(begin))/(pd.Timestamp(end_time)-pd.Timestamp(begin))*100
+                percent = (pd.Timestamp(time)-pd.Timestamp(self.__start_date))/(pd.Timestamp(self.__end_date)-pd.Timestamp(self.__start_date))*100
                 if percent >= last_percent+10:
                     last_percent = percent
                     print(percent)
-            time = snp.data.index[i+1] if i+1 < len(snp.data.index) else end_time
+            time = snp.data.index[i+1] if i+1 < len(snp.data.index) else (self.__end_date+dt.timedelta(seconds=1))
         if trace:
             print('Complete!')
         self.__completed = True
+    
+    @property
+    def start_date(self) -> dt.datetime:
+        if not self.__completed:
+            raise RuntimeError('Backtest has not been completed yet')
+        return self.__start_date
+    
+    @property
+    def end_date(self) -> dt.datetime:
+        if not self.__completed:
+            raise RuntimeError('Backtest has not been completed yet')
+        return self.__end_date
     
     @property
     def algorithm(self) -> Algorithm:

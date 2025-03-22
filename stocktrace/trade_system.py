@@ -159,6 +159,10 @@ class Broker:
         return self.__cash + self.unrealized_pl(time)
     
     @property
+    def closed_trades(self) -> list['Trade']:
+        return sum((position.closed_trades for position in self.__positions.values()),[])
+    
+    @property
     def orders(self) -> list[Order]:
         return self.__orders
 
@@ -210,6 +214,22 @@ class Trade:
         logger.info(f'... Entry at {self.__entry_cents}, Exit at {current_cents}, Fee is {fee}, Shares is {self.__shares}')
         logger.info(f'... pl is {self.__shares * (current_cents - self.__entry_cents) - fee}')
         return self.__shares * (current_cents - self.__entry_cents) - fee
+
+    def pl_fraction(self, time: Optional[dt.datetime]=None) -> float:
+        pl = self.pl(time)
+        return pl/(self.__entry_cents*abs(self.__shares))
+
+    def duration(self, time: Optional[dt.datetime]=None) -> dt.timedelta:
+        asset = AssetManager.get(self.__ticker_symbol)
+        if not time:
+            if self.is_closed():
+                time = self.__exit_time
+            else:
+                time = asset.latest_date()
+        else:
+            time = asset.prev_or_equal_date(time)
+        assert time > self.__entry_time
+        return time-self.__entry_time
 
     def is_closed(self) -> bool:
         return self.__exit_cents is not None and self.__exit_time is not None
