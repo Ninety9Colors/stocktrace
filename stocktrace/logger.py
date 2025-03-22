@@ -13,6 +13,9 @@ class LOG_LEVEL:
 	DEBUG = 1
 	WARNING = 2
 	CRITICAL = 3
+	NONE = 4
+
+DEFAULT_LOG_LEVEL = LOG_LEVEL.INFO
 
 class TerminalLog:
 	def __init__(self, log_level: int=LOG_LEVEL.INFO):
@@ -118,8 +121,9 @@ class CircularLog(FileLog):
 class Logger():
 	_initialized = False
 	@classmethod
-	def init(cls):
+	def init(cls, log_level=DEFAULT_LOG_LEVEL):
 		cls._initialized = True
+		cls.__log_level = log_level
 		cls.__logs = []
 		cls.__logs.append(CircularLog(DEFAULT_LOG_FILE_NAME, DEFAULT_LOG_PATH, max_log_count=DEFAULT_MAX_LOG_COUNT))
 		cls.__logs.append(TerminalLog())
@@ -152,5 +156,7 @@ class Logger():
 
 	@classmethod
 	def _propagate_log(cls, message: str, log_level: int):
+		if log_level < cls.__log_level:
+			return
 		for log in cls.__logs:
 			log.write_log(message, log_level)

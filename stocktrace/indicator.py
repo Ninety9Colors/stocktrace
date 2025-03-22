@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import datetime as dt
+from typing import Optional
 import numpy as np
 import pandas as pd
 
@@ -8,7 +9,7 @@ from stocktrace.utils import requires_explicit_init
 from stocktrace.logger import Logger as logger
 
 class Indicator(ABC):
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: Optional[str]=None) -> None:
         self._initialized = False
         self.__name = name
         self.__ticker_symbol = 'Uninitialized'
@@ -48,6 +49,15 @@ class SMA_TWENTY(Indicator):
         time = asset.prev_or_equal_date(time)
         end = asset.data.index.get_loc(time) # inclusive
         start = end-19 # inclusive
+        if start < 0:
+            return np.nan
+        return asset.data.iloc[start:end+1]['Close'].mean()
+    
+class SMA_TEN(Indicator):
+    def compute(self, asset: Asset, time: dt.datetime) -> float:
+        time = asset.prev_or_equal_date(time)
+        end = asset.data.index.get_loc(time) # inclusive
+        start = end-9 # inclusive
         if start < 0:
             return np.nan
         return asset.data.iloc[start:end+1]['Close'].mean()

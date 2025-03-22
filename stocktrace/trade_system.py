@@ -1,5 +1,6 @@
 import datetime as dt
 from math import ceil, copysign, floor
+import sys
 from typing import Optional
 
 from stocktrace.asset import AssetManager
@@ -104,15 +105,20 @@ class Broker:
         self.__spread = spread
     
     def place_order(self, order: Order) -> None:
-        logger.info(f'Broker.place_order() Placing order for {order.shares} shares of {order.ticker_symbol}')
+        if order.shares == 0:
+            logger.info(f'Broker.place_order() Order for 0 shares of {order.ticker_symbol} ignored')
+            return
+        logger.info(f'Broker.place_order() Placing order for {order.shares} shares of {order.ticker_symbol}, {order.time_placed}')
         self.__orders.append(order)
     
     def cancel_order(self, order: Order) -> None:
         order.cancel()
     
     def process_orders(self, time: Optional[dt.datetime]=None) -> None:
-        logger.info(f'Broker.process_orders() Processing orders at {time=}')
-        for order in self.__orders:
+        logger.info(f'Broker.process_orders() Processing {len(self.__orders)} orders at {time=}')
+        for i,order in enumerate(list(self.__orders)):
+            assert order.time_placed <= time, 'Order cannot be processed before it was placed'
+            logger.info(f'Broker.process_orders() Propagating order #{i}...')
             position = self.__positions.get(order.ticker_symbol)
             if position is None:
                 position = Position(self, order.ticker_symbol)
@@ -126,9 +132,10 @@ class Broker:
         logger.info(f'... fee is {ceil(SEC*abs(total_cents)) + ceil(FINRA*abs(shares))}')
         return ceil(SEC*abs(total_cents)) + ceil(FINRA*abs(shares))
 
-    def adjusted_price(self, shares: int, cents: int) -> int:
+    def adjusted_price(self, shares: int, cents: int, high_cents: Optional[int]=sys.maxsize, low_cents: Optional[int]=0) -> int:
         logger.info(f'Broker.adjusted_price() Adjusting price for {shares=} shares and {cents=} cents ...')
         raw = cents*(1+copysign(self.__spread, shares))
+        raw = min(raw, high_cents) if (shares>0) else max(raw,low_cents)
         logger.info(f'... adjusted price is {ceil(raw) if shares > 0 else floor(raw)}')
         return ceil(raw) if shares > 0 else floor(raw)
 
@@ -141,17 +148,19 @@ class Broker:
     def unrealized_pl(self, current_time: Optional[dt.datetime]=None) -> int:
         return sum(position.unrealized_pl(current_time) for position in self.__positions.values())
     
-    @property
-    def positions(self) -> dict:
-        return self.__positions
+    def get_position(self, ticker_symbol: str) -> 'Position':
+        position = self.__positions.get(ticker_symbol)
+        if position is None:
+            position = Position(self, ticker_symbol)
+            self.__positions[ticker_symbol] = position
+        return position
+
+    def equity(self, time: Optional[dt.datetime]=None) -> int:
+        return self.__cash + self.unrealized_pl(time)
     
     @property
     def orders(self) -> list[Order]:
         return self.__orders
-    
-    @property
-    def equity(self) -> int:
-        return self.cash + self.unrealized_pl()
 
     @property
     def cash(self) -> int:
@@ -193,7 +202,9 @@ class Trade:
             time = asset.latest_date()
         else:
             time = asset.prev_or_equal_date(time)
-        current_cents = self.__exit_cents if self.is_closed() else self.broker.adjusted_price(self.__shares,asset.get_cents(time))
+        high = asset.get_cents(time, 'High')
+        low = asset.get_cents(time, 'Low')
+        current_cents = self.__exit_cents if self.is_closed() else self.broker.adjusted_price(self.__shares,asset.get_cents(time), high, low)
         raw = self.shares * current_cents
         fee = self.__broker.get_fee(self.__shares, raw)
         logger.info(f'... Entry at {self.__entry_cents}, Exit at {current_cents}, Fee is {fee}, Shares is {self.__shares}')
@@ -250,7 +261,7 @@ class Trade:
         return self.__broker
     
     def __repr__(self) -> str:
-        return f'Trade({self.__ticker_symbol}, {self.__shares}, {self.__entry_cents=}, {self.__exit_cents=})'
+        return f'Trade({self.__ticker_symbol}, {self.__shares}, {self.__entry_cents=}, {self.__exit_cents=}, {self.__exit_time})'
 
 class Position:
     '''
@@ -314,7 +325,7 @@ class Position:
             exec_price = prev_close if self.__broker.trade_on_close else open_cents
             if stop_cents:
                 exec_price = max(exec_price, stop_cents) if order.is_long() else min(exec_price, stop_cents)
-            exec_price = self.__broker.adjusted_price(order.shares, exec_price)
+            exec_price = self.__broker.adjusted_price(order.shares, exec_price, high_cents, low_cents)
             time = prev_time if self.__broker.trade_on_close else time
         logger.info(f'... executing order at {exec_price}')
         need_shares = order.shares
