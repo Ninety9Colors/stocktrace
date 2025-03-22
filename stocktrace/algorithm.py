@@ -3,10 +3,10 @@ import datetime as dt
 from typing import Optional
 
 from stocktrace.asset import AssetManager
-from stocktrace.indicator import Indicator, SMA_TEN, SMA_TWENTY
+from stocktrace.indicator import IndicatorManager, Indicator
 from stocktrace.logger import Logger as logger
 from stocktrace.trade_system import Broker, Order
-from stocktrace.utils import TIMEZONE
+from stocktrace.utils import TIMEZONE, requires_init
 
 class Algorithm(ABC):
     def __init__(self, name: Optional[str] = None) -> None:
@@ -15,11 +15,12 @@ class Algorithm(ABC):
         self.__indicators: list[Indicator] = []
         self.__latest_start = dt.datetime.min.replace(tzinfo=TIMEZONE)
     
-    def indicator(self, indicator: Indicator, ticker_symbol: str) -> Indicator:
+    def indicator(self, indicator, ticker_symbol: str, *args, **kwargs) -> Indicator:
         logger.info(f'Algorithm.indicator() adding Indicator {indicator.name} for {ticker_symbol} to Algorithm {self}')
-        indicator.init(ticker_symbol)
-        self.__indicators.append(indicator)
-        return indicator
+        ind = indicator(*args, **kwargs)
+        ind.init(ticker_symbol)
+        self.__indicators.append(ind)
+        return ind
     
     @abstractmethod
     def init(self) -> None:
@@ -45,25 +46,32 @@ class Algorithm(ABC):
     
     def __repr__(self) -> str:
         return f'Algorithm({self.name})'
-
-class SMACrossOver(Algorithm):
-    def init(self) -> None:
-        self.name = 'SMACrossOver'
-        self.sma1 = self.indicator(SMA_TEN(), 'GOOG')
-        self.sma2 = self.indicator(SMA_TWENTY(), 'GOOG')
-        self.__latest_start = self.sma2.data.index[1]
     
-    def next(self, time: dt.datetime, broker: Broker) -> None:
-        prev_time = AssetManager.get('^GSPC').prev_date(time)
-        if prev_time < self.__latest_start:
-            return
-        if self.sma1.data[time] > self.sma2.data[time] and self.sma1.data[prev_time] <= self.sma2.data[prev_time]:
-            close_order = Order(broker, 'GOOG', -broker.get_position('GOOG').shares, time_placed=time)
-            buy_order = Order(broker, 'GOOG', broker.cash//AssetManager.get('GOOG').get_cents(time), time_placed=time)
-            broker.place_order(close_order)
-            broker.place_order(buy_order)
-        elif self.sma1.data[time] < self.sma2.data[time] and self.sma1.data[prev_time] >= self.sma2.data[prev_time]:
-            close_order = Order(broker, 'GOOG', -broker.get_position('GOOG').shares, time_placed=time)
-            buy_order = Order(broker, 'GOOG', -broker.cash//AssetManager.get('GOOG').get_cents(time), time_placed=time)
-            broker.place_order(close_order)
-            broker.place_order(buy_order)
+class AlgorithmManager():
+    _initialized = False
+
+    @classmethod
+    def init(cls) -> None:
+        logger.info('AlgorithmManager.init() Initializing Algorithm Manager')
+        from stocktrace.custom.custom_algorithm import import_algorithms
+        cls._initialized = True
+        cls.__algorithms = {}
+        import_algorithms()
+    
+    @classmethod
+    @requires_init
+    def add_algorithm(cls, name: str, algorithm) -> bool:
+        if name not in cls.__algorithms.keys():
+            logger.info(f'AlgorithmManager.add_algorithm() Importing algorithm {name}')
+            cls.__algorithms[name] = algorithm
+            return True
+        logger.warning(f'AlgorithmManager.add_algorithm() Algorithm {name} already exists! Ignoring...')
+        return False
+
+    @classmethod
+    @requires_init
+    def get_algorithm(cls, name: str):
+        if name not in cls.__algorithms.keys():
+            logger.warning(f'AlgorithmManager.get_algorithm() Algorithm {name} does not exist! Ignoring...')
+            return None
+        return cls.__algorithms[name]

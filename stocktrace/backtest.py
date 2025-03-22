@@ -10,12 +10,12 @@ from stocktrace.utils import TIMEZONE
 
 class Backtest:
     def __init__(self, 
-                 algorithm: Algorithm, 
+                 algorithm, 
                  broker: Broker, 
                  start_date: Optional[dt.datetime]=dt.datetime.min.replace(tzinfo=TIMEZONE), 
                  end_date: Optional[dt.datetime]=None) -> None:
         logger.debug(f'Backtest.__init__ Creating Backtest with algorithm {algorithm.name}, start date {start_date}, end date {end_date}')
-        self.__algorithm = algorithm
+        self.__algorithm = algorithm()
         self.__broker = broker
         self.__start_date = start_date
         self.__end_date = end_date

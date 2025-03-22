@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from stocktrace.asset import Asset, AssetManager
-from stocktrace.utils import requires_explicit_init
+from stocktrace.utils import requires_explicit_init, requires_init
 from stocktrace.logger import Logger as logger
 
 class Indicator(ABC):
@@ -43,21 +43,32 @@ class Indicator(ABC):
     @property
     def name(self) -> str:
         return self.__name
-
-class SMA_TWENTY(Indicator):
-    def compute(self, asset: Asset, time: dt.datetime) -> float:
-        time = asset.prev_or_equal_date(time)
-        end = asset.data.index.get_loc(time) # inclusive
-        start = end-19 # inclusive
-        if start < 0:
-            return np.nan
-        return asset.data.iloc[start:end+1]['Close'].mean()
     
-class SMA_TEN(Indicator):
-    def compute(self, asset: Asset, time: dt.datetime) -> float:
-        time = asset.prev_or_equal_date(time)
-        end = asset.data.index.get_loc(time) # inclusive
-        start = end-9 # inclusive
-        if start < 0:
-            return np.nan
-        return asset.data.iloc[start:end+1]['Close'].mean()
+class IndicatorManager():
+    _initialized = False
+
+    @classmethod
+    def init(cls) -> None:
+        logger.info('IndicatorManager.init() Initializing Indicator Manager')
+        from stocktrace.custom.custom_indicator import import_indicators
+        cls._initialized = True
+        cls.__indicators = {}
+        import_indicators()
+    
+    @classmethod
+    @requires_init
+    def add_indicator(cls, name: str, indicator) -> bool:
+        if name not in cls.__indicators.keys():
+            logger.info(f'IndicatorManager.add_indicator() Importing indicator {name}')
+            cls.__indicators[name] = indicator
+            return True
+        logger.warning(f'IndicatorManager.add_indicator() Indicator {name} already exists! Ignoring...')
+        return False
+
+    @classmethod
+    @requires_init
+    def get_indicator(cls, name: str):
+        if name not in cls.__indicators.keys():
+            logger.warning(f'IndicatorManager.get_indicator() Indicator {name} does not exist! Ignoring...')
+            return None
+        return cls.__indicators[name]

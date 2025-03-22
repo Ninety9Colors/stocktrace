@@ -3,12 +3,12 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt6 import QtCore
 
-from stocktrace import Backtest, Algorithm, Broker, SMACrossOver, Logger, LOG_LEVEL, TIMEZONE, AssetWidget, AssetManager, generate_statistics
+from stocktrace import Backtest, Algorithm, Broker, AlgorithmManager, Logger, LOG_LEVEL, TIMEZONE, AssetWidget, AssetManager, generate_statistics
 
 Logger.init(LOG_LEVEL.WARNING)
 
 backtest = Backtest(
-    algorithm=SMACrossOver(),
+    algorithm=AlgorithmManager.get_algorithm('SMACrossOver'),
     broker=Broker(start_cash_cents=1000000, spread=0),
     start_date=dt.datetime(2004, 8, 19, tzinfo=TIMEZONE),
     end_date=dt.datetime(2013, 3, 1, 23, 0, 0, tzinfo=TIMEZONE)

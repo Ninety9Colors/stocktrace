@@ -1,7 +1,7 @@
-from stocktrace import Indicator, Asset, AssetManager, SMA_TWENTY
+from stocktrace import Indicator, Asset, AssetManager, IndicatorManager
 
 AssetManager.get('AAPL').save_data()
-sma = SMA_TWENTY('SMA_TWENTY')
+sma = IndicatorManager.get_indicator('SMA_TWENTY')('SMA_TWENTY')
 sma.init('AAPL')
 print(sma.data.head(30))
 
