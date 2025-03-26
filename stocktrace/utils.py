@@ -5,11 +5,21 @@ from pyqtgraph.Qt.QtGui import QColor
 
 import stocktrace.logger as logger
 
+DATA_PATH = 'data/'
+
+DEFAULT_FONT = 'Helvetica'
+
 # TODO: Get timezone from settings
 TIMEDELTA = dt.timedelta(hours=-5)
 TIMEZONE = dt.timezone(TIMEDELTA)
 
 # TODO: Get color from settings
+DARK_STR = '(50,50,50)'
+NORMAL_STR = '(80,80,80)'
+
+DARK = QColor(50,50,50)
+NORMAL = QColor(80,80,80)
+
 BULLISH = QColor(0, 255, 0)
 BEARISH = QColor(255, 0, 0)
 

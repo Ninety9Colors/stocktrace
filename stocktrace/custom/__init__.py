@@ -1,0 +1,1 @@
+from stocktrace.custom.custom_indicator import SMA_TEN, SMA_TWENTY

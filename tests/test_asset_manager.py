@@ -1,4 +1,4 @@
-from stocktrace import Asset, AssetManager, CSV
+from stocktrace import Asset, AssetManager
 
 AssetManager.get('AAPL')
 AssetManager.get('MSFT')

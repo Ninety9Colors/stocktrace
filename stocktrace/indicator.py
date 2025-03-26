@@ -19,10 +19,19 @@ class Indicator(ABC):
     def compute(self, asset: Asset, time: dt.datetime) -> float:
         '''User defined function to compute indicator value given a certain time, from Asset OHLCV data'''
         pass
+
+    def update_data(self, new_ticker: Optional[str]=None) -> None:
+        assert self._initialized
+        logger.info(f'Indicator.update_data() Updating indicator {self.name}, new ticker? = {new_ticker}')
+        if new_ticker:
+            self.__ticker_symbol = new_ticker
+        self._initialized = False
+        self.init(self.__ticker_symbol)
+        self._initialized = True
     
     def init(self, ticker_symbol: str) -> None:
         self._initialized = True
-        logger.info(f'Indicator.init() Initializing indicator {self.__name} for {ticker_symbol}')
+        logger.info(f'Indicator.init() Initializing indicator {self.__name} for {ticker_symbol}...')
         self.__ticker_symbol = ticker_symbol
         asset = AssetManager.get(self.__ticker_symbol)
         self.__data = pd.Series(np.nan, index=asset.data.index, name=self.__name)
@@ -34,6 +43,7 @@ class Indicator(ABC):
                 logger.info(f'Indicator.init() Could not compute {self.__name} at {time}, likely due to warmup lag')
         
         self.__data.dropna(inplace=True)
+        logger.info(f'Initialized!:\n{self.__data}')
     
     @property
     @requires_explicit_init
@@ -72,3 +82,8 @@ class IndicatorManager():
             logger.warning(f'IndicatorManager.get_indicator() Indicator {name} does not exist! Ignoring...')
             return None
         return cls.__indicators[name]
+    
+    @classmethod
+    @requires_init
+    def get_indicators(cls) -> dict[str, Indicator]:
+        return cls.__indicators
