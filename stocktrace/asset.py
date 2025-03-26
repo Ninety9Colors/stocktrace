@@ -87,7 +87,11 @@ class AssetManager():
 			logger.info('Initializing existing loaded tickers...')
 			for name in cls.__ticker_csv.data['Tickers']:
 				logger.info(f'{name}')
-				cls.__assets[name] = cls.get(name, new=False)
+				asset = cls.get(name)
+				if asset is None:
+					logger.warning(f'Asset with ticker {name} not found...')
+					continue
+				cls.__assets[name] = cls.get(name)
 		else:
 			cls.__ticker_csv.data['Tickers'] = pd.Series(dtype=str)
 
@@ -100,12 +104,12 @@ class AssetManager():
 	
 	@classmethod
 	@requires_init
-	def get(cls, ticker_symbol: str, interval: str='1d', new: bool=True) -> Asset:
+	def get(cls, ticker_symbol: str, interval: str='1d') -> Asset:
 		if ticker_symbol not in cls.__assets:
 			asset = Asset(ticker_symbol, interval)
 			if asset.ticker_found:
 				cls.__assets[ticker_symbol] = asset
-				if new:
+				if ticker_symbol not in cls.__ticker_csv.data['Tickers']:
 					new_df = pd.DataFrame(columns=['Tickers'])
 					new_df.loc[0] = ticker_symbol
 					cls.__ticker_csv.append(new_df)
