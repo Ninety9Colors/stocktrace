@@ -2,7 +2,8 @@ from stocktrace.algorithm import Algorithm, AlgorithmManager
 from stocktrace.asset import Asset, AssetManager
 from stocktrace.backtest import Backtest
 from stocktrace.file import CSV, TIME_CSV
-from stocktrace.gui.graphs import AssetWidget, CandlestickItem
+from stocktrace.gui.graphs import AssetWidget, CandlestickItem, EquityWidget, BacktestAssetWidget
+from stocktrace.gui.backtest_page import BacktestPanel
 from stocktrace.history import AssetHistory
 from stocktrace.indicator import IndicatorManager, Indicator
 from stocktrace.logger import Logger, FileLog, CircularLog, LOG_LEVEL

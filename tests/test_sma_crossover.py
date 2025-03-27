@@ -3,7 +3,7 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt6 import QtCore
 
-from stocktrace import Backtest, Algorithm, Broker, AlgorithmManager, Logger, LOG_LEVEL, TIMEZONE, AssetWidget, AssetManager, generate_statistics
+from stocktrace import Backtest, Algorithm, Broker, AlgorithmManager, Logger, LOG_LEVEL, TIMEZONE, BacktestPanel, AssetWidget, AssetManager, generate_statistics, BacktestAssetWidget, EquityWidget
 
 Logger.init(LOG_LEVEL.WARNING)
 
@@ -22,31 +22,10 @@ stats = generate_statistics(backtest.broker.closed_trades, backtest.equity, back
 print(stats)
 
 app = pg.Qt.mkQApp()
-plot_widget: AssetWidget = AssetWidget(AssetManager.get('GOOG'))
-plot_widget.plot_item.setAxisItems({'bottom': pg.DateAxisItem()})
-# plot_widget.plotItem.plot(x, backtest.equity.values)
-# plot_widget.plot_item.plot(x1, backtest.algorithm.sma1.data.values)
-# plot_widget.plot_item.plot(x2, backtest.algorithm.sma2.data.values)
 
-for trade in backtest.broker.get_position('GOOG').closed_trades:
-    pen = pg.mkPen(('g' if (trade.is_long() == (trade.exit_cents > trade.entry_cents)) else 'r'),
-                   width=2,
-                   style=QtCore.Qt.PenStyle.DotLine if trade.is_long() else QtCore.Qt.PenStyle.DashLine)
-    roi = pg.LineSegmentROI(((trade.entry_time.timestamp(), trade.entry_cents/100),(trade.exit_time.timestamp(), trade.exit_cents/100))
-                            ,pen=pen)
+panel = BacktestPanel(backtest, stats)
 
-    for handle in roi.getHandles():
-        handle.hide()
-    plot_widget.plot_item.addItem(roi)
-
-plot_widget2 = pg.PlotWidget()
-plot_widget2.plotItem.setAxisItems({'bottom': pg.DateAxisItem()})
-x = np.array([x.timestamp() for x in backtest.equity.index])
-y = np.array([x/10000 for x in backtest.equity.values])
-plot_widget2.plotItem.plot(x,y)
-
-plot_widget2.show()
-plot_widget.show()
+panel.show()
 app.exec()
 
 # 10.006341667453752

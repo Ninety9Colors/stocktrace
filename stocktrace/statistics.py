@@ -102,7 +102,7 @@ def generate_statistics(closed_trades: list[Trade],
     result.loc['End'] = end
     result.loc['Duration'] = duration
     result.loc['Return %'] = return_pct*100
-    result.loc[f'Buy and Hold Return % ({alpha_ticker})'] = bh_pct*100
+    result.loc[f'Buy and Hold Return %'] = bh_pct*100
     result.loc['Equity Final $'] = equity_final/100
     result.loc['Equity Peak $'] = equity_peak/100
     result.loc['Equity Peak Date'] = equity_peak_date

@@ -15,9 +15,9 @@ class Algorithm(ABC):
         self.__indicators: list[Indicator] = []
         self.__latest_start = dt.datetime.min.replace(tzinfo=TIMEZONE)
     
-    def indicator(self, indicator, ticker_symbol: str, *args, **kwargs) -> Indicator:
-        logger.info(f'Algorithm.indicator() adding Indicator {indicator.name} for {ticker_symbol} to Algorithm {self}')
-        ind = indicator(*args, **kwargs)
+    def indicator(self, name: str, ticker_symbol: str, *args, **kwargs) -> Indicator:
+        logger.info(f'Algorithm.indicator() adding Indicator {name} for {ticker_symbol} to Algorithm {self}')
+        ind = IndicatorManager.get_indicator(name)(name=name,*args, **kwargs)
         ind.init(ticker_symbol)
         self.__indicators.append(ind)
         return ind
@@ -43,6 +43,10 @@ class Algorithm(ABC):
     @name.setter
     def name(self, new_name) -> None:
         self.__name = new_name
+    
+    @property
+    def indicators(self) -> list[Indicator]:
+        return self.__indicators
     
     def __repr__(self) -> str:
         return f'Algorithm({self.name})'
@@ -75,3 +79,8 @@ class AlgorithmManager():
             logger.warning(f'AlgorithmManager.get_algorithm() Algorithm {name} does not exist! Ignoring...')
             return None
         return cls.__algorithms[name]
+    
+    @classmethod
+    @requires_init
+    def get_algorithms(cls) -> dict:
+        return cls.__algorithms

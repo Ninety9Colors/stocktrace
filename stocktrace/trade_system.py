@@ -155,6 +155,9 @@ class Broker:
             self.__positions[ticker_symbol] = position
         return position
 
+    def get_traded_tickers(self) -> list[str]:
+        return list(self.__positions.keys())
+
     def equity(self, time: Optional[dt.datetime]=None) -> int:
         return self.__cash + self.unrealized_pl(time)
     

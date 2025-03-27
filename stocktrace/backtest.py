@@ -45,6 +45,9 @@ class Backtest:
             print('Complete!')
         self.__completed = True
     
+    def get_traded_tickers(self) -> list[str]:
+        return self.__broker.get_traded_tickers()
+    
     @property
     def start_date(self) -> dt.datetime:
         if not self.__completed:

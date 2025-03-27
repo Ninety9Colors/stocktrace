@@ -17,6 +17,9 @@ TIMEZONE = dt.timezone(TIMEDELTA)
 DARK_STR = '(50,50,50)'
 NORMAL_STR = '(80,80,80)'
 
+BULLISH_STR = '(0, 255, 0)'
+BEARISH_STR = '(255, 0, 0)'
+
 DARK = QColor(50,50,50)
 NORMAL = QColor(80,80,80)
 
