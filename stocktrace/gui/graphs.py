@@ -295,3 +295,5 @@ class AssetWidget(QtWidgets.QWidget):
         if self.auto_update:
             logger.info(f'Auto updating {self.__repr__}')
             self.update_data()
+
+

@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QWidget, QScrollArea, QLabel, QGridLayout, QApplication, QPushButton, QLineEdit
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QPalette, QColor
+from PyQt6.QtGui import QFont
 
 from stocktrace.asset import AssetManager
 from stocktrace.logger import Logger as logger
@@ -42,6 +42,10 @@ class DictSelect(QWidget):
         self.__scroll_area.setWidget(self.__scroll_widget)
         self.__scroll_area.setWidgetResizable(True)
 
+        self.__info_box = QLabel()
+        self.__info_box.setFont(QFont(DEFAULT_FONT,12))
+        self.layout().addWidget(self.__info_box,2,0)
+
         self.set_dict(self.__items)
         self._init_buttons()
 
@@ -53,6 +57,7 @@ class DictSelect(QWidget):
         if self.__selected is not None:
             self.__labels[self.__selected].unhighlight()
         self.__selected = None
+        self.__info_box.setText(None)
     
     def set_dict(self, new_dict) -> None:
         for i in reversed(range(self.__scroll_widget.layout().count())): 
@@ -103,6 +108,10 @@ class DictSelect(QWidget):
 
             self.layout().addWidget(self.__search_box, 1, 0)
             self.layout().setColumnStretch(0,2)
+    
+    @property
+    def info_box(self) -> QLabel:
+        return self.__info_box
         
     @property
     def search_entry(self) -> QLineEdit:
@@ -133,7 +142,7 @@ class AssetPage(QWidget):
         self.__asset_select_button = QPushButton('Select an Asset')
         self.__indicator_select_button = QPushButton('Add Indicators')
 
-        self.__title_widget.setFont(QFont(DEFAULT_FONT, 25))
+        self.__title_widget.setFont(QFont(DEFAULT_FONT, 15))
         self.__asset_select_button.setFont(QFont(DEFAULT_FONT, 12))
         self.__indicator_select_button.setFont(QFont(DEFAULT_FONT, 12))
 
@@ -157,14 +166,14 @@ class AssetPage(QWidget):
     def on_indicator_select(self) -> None:
         selection = self.__indicator_select.get_selected()
         if selection is None:
-            self.__title_widget.setText('Please select an indicator')
+            self.__indicator_select.info_box.setText('Please select an indicator')
             return
         elif self.__initialized and selection in self.__display_widget.indicators.keys():
             self.__display_widget.remove_indicator(selection)
             return
         
         if not self.__initialized:
-            self.__title_widget.setText('Please select an asset first')
+            self.__indicator_select.info_box.setText('Please select an asset first')
             return
         else:
             self.__display_widget.add_indicator(selection)
@@ -173,7 +182,7 @@ class AssetPage(QWidget):
     def on_asset_select(self) -> None:
         selection = self.__asset_select.get_selected()
         if selection is None:
-            self.__title_widget.setText('Please select an asset')
+            self.__asset_select.info_box.setText('Please select an asset')
             return
         elif self.__initialized and selection == self.__display_widget.asset.ticker_symbol:
             return
@@ -189,17 +198,18 @@ class AssetPage(QWidget):
             self.__display_widget.set_asset(asset)
 
         asset.save_data()
-        
+        self.__title_widget.setText(f'Displaying ticker: {asset.ticker_symbol}')
         self.__asset_select.hide()
     
     def on_asset_search(self) -> None:
         query = self.__asset_select.search_entry.text()
         if query is None or query == '':
+            self.__asset_select.info_box.setText('Please provide a ticker symbol')
             return
         
         asset = AssetManager.get(query)
         if asset is None:
-            self.__title_widget.setText('Asset not found')
+            self.__asset_select.info_box.setText('Asset not found')
         else:
             self.__asset_select.set_dict(AssetManager.get_assets())
             self.__asset_select.search_entry.setText('')

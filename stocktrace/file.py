@@ -9,24 +9,23 @@ from stocktrace.logger import Logger as logger
 from stocktrace.utils import TIMEZONE
 
 class CSV:
-    def __init__(self, file_path: str, lazy_load = True) -> None:
-        logger.debug(f'CSV.__init__ Creating CSV with file path {file_path} and lazy_load {lazy_load}')
+    def __init__(self, file_path: str) -> None:
+        logger.debug(f'CSV.__init__ Creating CSV with file path {file_path}')
         self.__file_path = file_path
         self._data = pd.DataFrame()
-        self.__file_length = -1
-        if not lazy_load:
-            self.data
+        self.__file_length = 0
+        self.data
     
     def save(self) -> None:
         if self._data.empty:
             return
         logger.debug(f'CSV.save() saving data of {self.file_path}...')
-        if self.__file_length != -1 and self.__file_length < len(self.data.index):
+        if self.__file_length == 0:
+            self._data.to_csv(self.__file_path)
+            self.__file_length = len(self._data.index)
+        elif self.__file_length < len(self.data.index):
             append_data = self._data.iloc[self.__file_length:]
             append_data.to_csv(self.__file_path, mode='a', header=False)
-            self.__file_length = len(self.data.index)
-        else:
-            self._data.to_csv(self.__file_path)
             self.__file_length = len(self.data.index)
     
     def append(self, data: pd.DataFrame) -> None:
@@ -51,8 +50,8 @@ class CSV:
         return self.__file_path
 
 class TIME_CSV(CSV):
-    def __init__(self, file_path: str, lazy_load = True) -> None:
-        super().__init__(file_path, lazy_load)
+    def __init__(self, file_path: str) -> None:
+        super().__init__(file_path)
     
     def read_csv(self) -> None:
         self._data = pd.read_csv(self.file_path, parse_dates=[0], index_col=0)

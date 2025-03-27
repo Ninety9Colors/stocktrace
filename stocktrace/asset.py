@@ -85,7 +85,7 @@ class AssetManager():
 		cls.__ticker_csv = CSV(f'{DATA_PATH}loaded_tickers.csv')
 		if not cls.__ticker_csv.data.empty:
 			logger.info('Initializing existing loaded tickers...')
-			for name in cls.__ticker_csv.data['Tickers']:
+			for name in cls.__ticker_csv.data['Tickers'].to_numpy():
 				logger.info(f'{name}')
 				asset = cls.get(name)
 				if asset is None:
@@ -109,7 +109,7 @@ class AssetManager():
 			asset = Asset(ticker_symbol, interval)
 			if asset.ticker_found:
 				cls.__assets[ticker_symbol] = asset
-				if ticker_symbol not in cls.__ticker_csv.data['Tickers']:
+				if ticker_symbol not in cls.__ticker_csv.data['Tickers'].values:
 					new_df = pd.DataFrame(columns=['Tickers'])
 					new_df.loc[0] = ticker_symbol
 					cls.__ticker_csv.append(new_df)

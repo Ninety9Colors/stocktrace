@@ -9,7 +9,7 @@ from stocktrace.trade_system import Broker
 from stocktrace.utils import TIMEZONE
 
 class Backtest:
-    def __init__(self, 
+    def __init__(self,
                  algorithm, 
                  broker: Broker, 
                  start_date: Optional[dt.datetime]=dt.datetime.min.replace(tzinfo=TIMEZONE), 
